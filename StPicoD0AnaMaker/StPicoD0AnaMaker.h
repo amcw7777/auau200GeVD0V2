@@ -1,7 +1,20 @@
 #ifndef StPicoD0AnaMaker_h
 #define StPicoD0AnaMaker_h
 
-/* **************************************************
+/***********************************************************************************
+ **
+ ** D0CorrelationV2Analyser
+ **
+ ** Author: Leon He
+ ************************************************************************************
+ **
+ ** Description: 
+ **
+ ************************************************************************************
+ **
+ ** Log:
+ **
+ ********************************************
  *  A Maker to read a StPicoEvent and StPicoD0Event
  *  simultaneously and do analysis. 
  *
@@ -112,18 +125,18 @@ class StPicoD0AnaMaker : public StMaker
     // add your member variables here. 
     // Remember that ntuples size can be really big, use histograms where appropriate
     TNtuple *mEventTuple;
-		TNtuple *mDTuple;
-		TNtuple *mHadronTuple;
+    TNtuple *mDTuple;
+    TNtuple *mHadronTuple;
     TH1F *dEtaDHadron;
     TH1F *hEtaD;
     TH1F *hEtaHadron;
     TH2F *hPhiHadron[8][3];
     TH2F *hPhiD[8][3];
     TH1F *vtxz;
-		TH2F *etaPhi;
-		TH2F *etaPhi_D;
-		TH2F *etaPhi_Hadron;
-		TH2F *etaPhi_Hadron_all;
+    TH2F *etaPhi;
+    TH2F *etaPhi_D;
+    TH2F *etaPhi_Hadron;
+    TH2F *etaPhi_Hadron_all;
     TProfile *profV2[8][5][3];//i.S or B; j.flatten; k. differetn etaGap
     TH1D *hadronV2[5][3];
     TH1D *hadronV2_sum[5][3];
@@ -143,12 +156,9 @@ class StPicoD0AnaMaker : public StMaker
     TNtuple *checkNew;
     TNtuple *checkOld;
 
-  TH2D *checkPeak;
-    
-    double fitsigma[6];
-    double fitmean[6];
-    double mHadronV2[9];
-  double efficiency[4][6];
+    TH2D *checkPeak;
+
+    double efficiency[4][6];
     ClassDef(StPicoD0AnaMaker, 1)
 };
 

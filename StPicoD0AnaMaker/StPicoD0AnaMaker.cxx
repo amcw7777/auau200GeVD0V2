@@ -151,8 +151,8 @@ Int_t StPicoD0AnaMaker::Init()
     }
   }
 
-  fitmean = {1.85921,1.8633,1.86403,1.86475,1.86252,1.86534};
-  fitsigma = {0.018139,0.0139476,0.0158346,0.0169282,0.0199567,0.0189131};
+  double fitmean[6] = {1.85921,1.8633,1.86403,1.86475,1.86252,1.86534};
+  double fitsigma[6] = {0.018139,0.0139476,0.0158346,0.0169282,0.0199567,0.0189131};
   ifstream ifs("efficiency.txt");
   for(int i=0; i<6; i++)
     for(int j=0; j<4; j++)
@@ -288,7 +288,7 @@ Int_t StPicoD0AnaMaker::Make()
   if(centrality>=7) centBin=1;
   else if(centrality>=4)  centBin=2;
   else centBin=3;
-    
+
   double reweight = mGRefMultCorrUtil->getWeight();
   for (int idx = 0; idx < aKaonPion->GetEntries(); ++idx)
   {
@@ -531,7 +531,7 @@ int StPicoD0AnaMaker::isD0PairOld(StKaonPion const* const kp) const
   }
 
   int charge = kaon->charge() * pion->charge();
-    
+
 
   if(pairCuts)
     return charge;
@@ -707,7 +707,7 @@ bool StPicoD0AnaMaker::getHadronCorV2(int idxGap)
   hadronFill[7] = reweight;
   //mHadronTuple->Fill(hadronFill);
   if(hadronFill[0]==0 || hadronFill[3]==0)
-     return false; 
+    return false; 
   double temp = (hadronFill[1]*hadronFill[4]+hadronFill[2]*hadronFill[5]);
   hadronV2[0][idxGap]->Fill(centrality,temp*reweight);
   hadronV2[1][idxGap]->Fill(centrality,hadronFill[2]*reweight);
@@ -719,17 +719,17 @@ bool StPicoD0AnaMaker::getHadronCorV2(int idxGap)
   hadronV2_sum[2][idxGap]->Fill(centrality,hadronFill[0]*reweight);
   hadronV2_sum[3][idxGap]->Fill(centrality,hadronFill[3]*reweight);
   hadronV2_sum[4][idxGap]->Fill(centrality,hadronFill[3]*reweight);
-//    StPicoTrack const* hadron = picoDst->track(i);
-//  hadronV2_excl[0][centrality]->Fill(hadron->pMom().perp(),temp*reweight);
-//  hadronV2_excl[1][centrality]->Fill(hadron->pMom().perp(),hadronFill[2]*reweight);
-//  hadronV2_excl[2][centrality]->Fill(hadron->pMom().perp(),hadronFill[1]*reweight);
-//  hadronV2_excl[3][centrality]->Fill(hadron->pMom().perp(),hadronFill[5]*reweight);
-//  hadronV2_excl[4][centrality]->Fill(hadron->pMom().perp(),hadronFill[4]*reweight);
-//  hadronV2_excl_sum[0][centrality]->Fill(hadron->pMom().perp(),hadronFill[0]*hadronFill[3]*reweight);
-//  hadronV2_excl_sum[1][centrality]->Fill(hadron->pMom().perp(),hadronFill[0]*reweight);
-//  hadronV2_excl_sum[2][centrality]->Fill(hadron->pMom().perp(),hadronFill[0]*reweight);
-//  hadronV2_excl_sum[3][centrality]->Fill(hadron->pMom().perp(),hadronFill[3]*reweight);
-//  hadronV2_excl_sum[4][centrality]->Fill(hadron->pMom().perp(),hadronFill[3]*reweight);
+  //    StPicoTrack const* hadron = picoDst->track(i);
+  //  hadronV2_excl[0][centrality]->Fill(hadron->pMom().perp(),temp*reweight);
+  //  hadronV2_excl[1][centrality]->Fill(hadron->pMom().perp(),hadronFill[2]*reweight);
+  //  hadronV2_excl[2][centrality]->Fill(hadron->pMom().perp(),hadronFill[1]*reweight);
+  //  hadronV2_excl[3][centrality]->Fill(hadron->pMom().perp(),hadronFill[5]*reweight);
+  //  hadronV2_excl[4][centrality]->Fill(hadron->pMom().perp(),hadronFill[4]*reweight);
+  //  hadronV2_excl_sum[0][centrality]->Fill(hadron->pMom().perp(),hadronFill[0]*hadronFill[3]*reweight);
+  //  hadronV2_excl_sum[1][centrality]->Fill(hadron->pMom().perp(),hadronFill[0]*reweight);
+  //  hadronV2_excl_sum[2][centrality]->Fill(hadron->pMom().perp(),hadronFill[0]*reweight);
+  //  hadronV2_excl_sum[3][centrality]->Fill(hadron->pMom().perp(),hadronFill[3]*reweight);
+  //  hadronV2_excl_sum[4][centrality]->Fill(hadron->pMom().perp(),hadronFill[3]*reweight);
   return true;
 }
 
@@ -755,6 +755,8 @@ bool StPicoD0AnaMaker::getCorV2(int idxCand,double weight)
   int ptIdx = 5;
   if(kp->pt()<5)
     ptIdx = static_cast<int>(kp->pt());
+  double fitmean[6] = {1.85921,1.8633,1.86403,1.86475,1.86252,1.86534};
+  double fitsigma[6] = {0.018139,0.0139476,0.0158346,0.0169282,0.0199567,0.0189131};
   double mean = fitmean[ptIdx];
   double sigma = fitsigma[ptIdx];
   bool fillSB[8];
@@ -847,19 +849,19 @@ bool StPicoD0AnaMaker::getCorV2(int idxCand,double weight)
   }//Loop over different eta gap (k)
   return true;
 }
-    
+
 bool StPicoD0AnaMaker::isEtaGap(double dEta,double mGap,double hEta)
 {
   if(mGap == 0) return true;
   double range =  2. - mGap*2;
-/*
-  if(dEta>mGap/2)
-    return hEta<(dEta-mGap) && hEta>(dEta-mGap-range);
-  else if(dEta<-1.*mGap/2)
-    return hEta>(dEta+mGap) && hEta<(dEta+mGap+range);
-  else 
-    return ((hEta>(dEta+mGap) && hEta<(dEta+mGap+range/2)) || (hEta<(dEta-mGap) && hEta>(dEta-mGap-range/2)));
-*/
+  /*
+     if(dEta>mGap/2)
+     return hEta<(dEta-mGap) && hEta>(dEta-mGap-range);
+     else if(dEta<-1.*mGap/2)
+     return hEta>(dEta+mGap) && hEta<(dEta+mGap+range);
+     else 
+     return ((hEta>(dEta+mGap) && hEta<(dEta+mGap+range/2)) || (hEta<(dEta-mGap) && hEta>(dEta-mGap-range/2)));
+     */
   if(dEta> (1.-2*mGap))
     return hEta<(dEta-mGap) && hEta>(dEta-mGap-range);
   else if(dEta<(-1.+2*mGap))
@@ -867,8 +869,8 @@ bool StPicoD0AnaMaker::isEtaGap(double dEta,double mGap,double hEta)
   else 
     return (hEta>(dEta+mGap) || hEta<(dEta-mGap));
 }
-  
-    
+
+
 
 
 

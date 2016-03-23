@@ -17,10 +17,10 @@ void runPicoD0AnaMaker(TString d0list="file.list",TString outFileName="test.root
   gSystem->Load("StPicoD0EventMaker");
   gROOT->LoadMacro("./loadKFLibraries.C");
   loadSharedLibraries();
-	gSystem->Load("libStPicoKFVertexFitter");
+	// gSystem->Load("libStPicoKFVertexFitter");
   gSystem->Load("StPicoD0AnaMaker");
   gSystem->Load("StRefMultCorr");
-  gSystem->Load("StPicoHFMaker");
+  // gSystem->Load("StPicoHFMaker");
 	gSystem->Load("libMinuit");
 
   chain = new StChain();
@@ -46,13 +46,13 @@ void runPicoD0AnaMaker(TString d0list="file.list",TString outFileName="test.root
 	// add your cuts here. 
 
 	// tracking
-  d0Cuts->setCutNHitsFitMax(20);
+  // d0Cuts->setCutNHitsFitMax(20);
 
 	// pions
-  d0Cuts->setCutTPCNSigmaPion(3.0);
+  // d0Cuts->setCutTPCNSigmaPion(3.0);
 
 	// kaons
-  d0Cuts->setCutTPCNSigmaKaon(2.0);
+  // d0Cuts->setCutTPCNSigmaKaon(2.0);
    
 	// kaonPion pair cuts
   float dcaDaughtersMax = 0.008;  // maximum
@@ -61,7 +61,7 @@ void runPicoD0AnaMaker(TString d0list="file.list",TString outFileName="test.root
   float cosThetaMin     = 0.90;   // minimum
   float minMass         = 1.6;
   float maxMass         = 2.1;
-  d0Cuts->setCutSecondaryPair(dcaDaughtersMax, decayLengthMin, decayLengthMax, cosThetaMin, minMass, maxMass);
+  // d0Cuts->setCutSecondaryPair(dcaDaughtersMax, decayLengthMin, decayLengthMax, cosThetaMin, minMass, maxMass);
 	  
   chain->Init();
   int nEntries = picoD0AnaMaker->getEntries();

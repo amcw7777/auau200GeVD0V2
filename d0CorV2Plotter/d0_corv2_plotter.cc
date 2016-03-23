@@ -139,7 +139,7 @@ vector<vector<double> > D0CorV2Plotter::fitMass()
 	TCanvas *massCheck = new TCanvas();
 	massCheck->Divide(3,2);
   mLog<<"pT bin\t\t\t\t#candidate\t\t\t\t\t\t#signal"<<endl;
-	for(int ipt=2;ipt<6;ipt++)
+	for(int ipt=0;ipt<6;ipt++)
 	{
 		massUnlike[ipt] = massPtUnlike->ProjectionX(Form("massUnlike_%i",ipt),ipt+1,ipt+1);	//unlike sign binning is 0,1,2..,5,10
 		if(ipt!=5)

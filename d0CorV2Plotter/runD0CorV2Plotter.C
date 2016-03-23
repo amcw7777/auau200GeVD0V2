@@ -7,6 +7,11 @@ using namespace std;
 // vector<double> getEfficiencySys();
 // vector<double> getBackgroundSys();
 
+void runD0CorV2Plotter(TString tempFileName="test.root")
+{
+  getD0V2(false,false,tempFileName.Data());//fill in centra value;
+ 
+}
 void runD0CorV2Plotter()
 {
   // getD0V2(false,false,"auau2014D0CorV2.root");//fill in centra value;
