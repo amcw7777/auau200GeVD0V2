@@ -1,3 +1,4 @@
+```bash
 mkdir myAnalysis
 cd myAnalysis
 
@@ -25,3 +26,4 @@ sh makeLinks.sh
 starver SL15c
 cons
 root4star -l -b -q -x runPicoD0AnaMaker.C\(\"$FILELIST\",\"OUTPUTFILENAME.root\"\)
+```
