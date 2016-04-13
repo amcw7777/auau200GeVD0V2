@@ -84,11 +84,11 @@ vector<vector<double> > D0CorV2Plotter::getD0V2(vector<double> &hadronV2, TH1D *
 /////// Set candidate and background sample
   mLog<<"============Foregroundd V2  ...========================="<<endl;
   mLog<<"pT\t\t\t\tForeground v2\t\t\t\tstat.error"<<endl;
-	TH1D *signalV2 = (TH1D *)flattenV2[5]->Clone("signalV2");
+	TH1D *candV2 = (TH1D *)flattenV2[5]->Clone("candV2");
   for(int ipt=1;ipt<7;ipt++)
   {
-    double v2Value = signalV2->GetBinContent(ipt);
-    double v2Error= signalV2->GetBinError(ipt);
+    double v2Value = candV2->GetBinContent(ipt);
+    double v2Error= candV2->GetBinError(ipt);
     mLog<<ipt<<"\t\t\t\t"<<v2Value<<"\t\t\t\t"<<v2Error<<endl;
   }
   mLog<<"============Background V2  ...========================="<<endl;
@@ -101,9 +101,8 @@ vector<vector<double> > D0CorV2Plotter::getD0V2(vector<double> &hadronV2, TH1D *
     mLog<<ipt<<"\t\t\t\t"<<v2Value<<"\t\t\t\t"<<v2Error<<endl;
   }
 // Background extraction
-	signalV2->Add(backgroundV2,-1);
-	signalV2->Multiply(candOverSignal);
-  signalV2->Add(backgroundV2,1);
+	// TH1D *signalV2 = (TH1D *)flattenV2[5]->Clone("signalV2");
+	TH1D *signalV2 = getSignalV2(candOverSignal,backgroundV2,candV2);
   vector<double> d0V2Values;
   vector<double> d0V2Errors;
   mLog<<"============D0 v2  ...========================="<<endl;
@@ -158,7 +157,7 @@ vector<vector<double> > D0CorV2Plotter::fitMass()
 		signalHistogram->SetBinContent(ipt+1,fitResult[0]);
 		signalHistogram->SetBinError(ipt+1,sig_yield.second);
 		candidateHistogram->SetBinContent(ipt+1,fitResult[1]);
-		candidateHistogram->SetBinError(ipt+1,0);
+		candidateHistogram->SetBinError(ipt+1,sqrt(fitResult[1]));
 		mLog<<ipt<<"\t\t\t\t"<<fitResult[0]<<"+/-"<<sig_yield.second<<"\t\t\t\t\t\t"<<fitResult[1]<<"+/-"<<fitResult[2]<<endl;
 	}
 /////calculate gamma = #candidates / #signal
@@ -400,3 +399,23 @@ pair<double,double> D0CorV2Plotter::fit_hist(TH1D *histo, TCanvas *cfg, int iptb
 
 	return fitResult;
 }
+TH1D *D0CorV2Plotter::getSignalV2(TH1D *candOverSgn,TH1D *bkgV2,TH1D *candV2)
+{
+	TH1D *signalV2 = (TH1D *)candV2->Clone("signalV2");
+	signalV2->Add(bkgV2,-1);
+	signalV2->Multiply(candOverSgn);
+  signalV2->Add(bkgV2,1);
+  for(unsigned int ipt=1;ipt<7;ipt++)
+  {
+    double v_candOverSgn = candOverSgn->GetBinContent(ipt);
+    double v_bkgV2 = bkgV2->GetBinContent(ipt);
+    double v_candV2 = candV2->GetBinContent(ipt);
+    double err_candOverSgn = candOverSgn->GetBinError(ipt);
+    double err_bkgV2 = bkgV2->GetBinError(ipt);
+    double err_candV2 = candV2->GetBinError(ipt);
+    double v2CalMatrix[6] = {v_candOverSgn,v_bkgV2,v_candV2,err_candOverSgn,err_bkgV2,err_candV2};
+    signalV2->SetBinError(ipt,getV2Error(v2CalMatrix));
+  }
+  return signalV2;
+}
+
