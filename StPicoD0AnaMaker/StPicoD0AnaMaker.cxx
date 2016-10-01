@@ -90,18 +90,21 @@ Int_t StPicoD0AnaMaker::Init()
   flatten[3] = "cosHadron";
   flatten[4] = "sinHadron";
   TString sb[8] = {"s1like","s3like","hSBlike","lSBlike","s1unlike","s3unlike","hSBunlike","lSBunlike"};
-  float xbin[7] = {0,1,2,3,4,5,10};
+  // float xbin[7] = {0,1,2,3,4,5,10};
+  const int xbinSize=10;
+  float xbin[11] = {0,0.5,1,1.5,2,2.5,3,3.5,4,5,10};
   float binMass[2001];
   float binPhi[2001];
+  candPt = new TProfile("candPt","",xbinSize,xbin);
   for(int i=0;i<2001;i++)
     binPhi[i] = 0.005*i-5;
   for(int i=0;i<2001;i++)
     binMass[i] = 0.01*i;
-  massPt = new TH2D("massPt","",2000,binMass,6,xbin);
-  massPtLike = new TH2D("massPtLike","",250,0,2.5,100,0,10);
-  massLike = new TH2D("massLike","",250,0,2.5,100,0,10);
+  massPt = new TH2D("massPt","",2000,binMass,xbinSize,xbin);
+  massPtLike = new TH2D("massPtLike","",2000,binMass,xbinSize,xbin);
+  massLike = new TH2D("massLike","",2000,binMass,xbinSize,xbin);
   massLike->Sumw2();
-  massUnlike = new TH2D("massUnlike","",2000,binMass,6,xbin);
+  massUnlike = new TH2D("massUnlike","",2000,binMass,xbinSize,xbin);
   massUnlike->Sumw2();
   for(int i=0;i!=8;i++)
   {
@@ -110,20 +113,20 @@ Int_t StPicoD0AnaMaker::Init()
       for(int j=0;j!=5;j++)
       {
         TString name = sb[i]+flatten[j]+Form("_%i",k);
-        profV2[i][j][k] = new TProfile(name.Data(),"",6,xbin);
+        profV2[i][j][k] = new TProfile(name.Data(),"",xbinSize,xbin);
         profV2[i][j][k]->Sumw2();
       }
       TString weightName = sb[i]+Form("_%i_weigth",k);
       float xWeight[10];
       for(int ii=0;ii<10;ii++)
         xWeight[ii] = ii;
-      v2Weight[i][k] = new TH2D(weightName.Data(),"",9,xWeight,6,xbin);
+      v2Weight[i][k] = new TH2D(weightName.Data(),"",9,xWeight,xbinSize,xbin);
       v2Weight[i][k]->Sumw2();
 
       TString namehPhi = "hadronPhi_"+sb[i]+Form("_%i",k);
       TString nameDPhi = "DPhi_"+sb[i]+Form("_%i",k);
-      hPhiHadron[i][k] = new TH2F(namehPhi.Data(),"",2000,binPhi,6,xbin);
-      hPhiD[i][k]= new TH2F(nameDPhi.Data(),"",2000,binPhi,6,xbin);
+      hPhiHadron[i][k] = new TH2F(namehPhi.Data(),"",2000,binPhi,xbinSize,xbin);
+      hPhiD[i][k]= new TH2F(nameDPhi.Data(),"",2000,binPhi,xbinSize,xbin);
       hPhiD[i][k]->Sumw2();
       hPhiHadron[i][k]->Sumw2();
     }
@@ -196,6 +199,7 @@ Int_t StPicoD0AnaMaker::Finish()
   // save user variables here
   massPt->Write();
   massPtLike->Write();
+  candPt->Write();
   vtxz->Write();
   for(int i=0;i!=8;i++)
   {
@@ -265,13 +269,11 @@ Int_t StPicoD0AnaMaker::Make()
 
   StThreeVectorF pVtx(-999.,-999.,-999.);
   StPicoEvent *event = (StPicoEvent *)picoDst->event();
-  if(!(isGoodEvent()) || !event->isMinBias())//minBias trigger requires
+  // if(!(isGoodEvent()) || !event->isMinBias())//minBias trigger requires
+  if(!(isGoodEvent()))//minBias trigger requires
   {
     LOG_WARN << " Not Good Event! Skip! " << endm;
     return kStWarn;
-  }
-  if(event) {
-    pVtx = event->primaryVertex();
   }
   vtxz->Fill(pVtx.z());
   if(!mGRefMultCorrUtil) {
@@ -280,10 +282,23 @@ Int_t StPicoD0AnaMaker::Make()
   }
   mGRefMultCorrUtil->init(picoDst->event()->runId());
   mGRefMultCorrUtil->initEvent(picoDst->event()->grefMult(),pVtx.z(),picoDst->event()->ZDCx()) ;
+  int centrality  = mGRefMultCorrUtil->getCentralityBin9();
+  if(centrality<0) {
+    LOG_WARN << "not minBias sample!" << endl;
+    return kStWarn;
+  }
+  // if(!(centrality==4||centrality==5||centrality==6))//minBias trigger requires
+  // {
+  //   LOG_WARN << " Not Good Event! Skip! " << endm;
+  //   return kStWarn;
+  // }
+  if(event) {
+    pVtx = event->primaryVertex();
+  }
 
   for(int k=0;k<3;k++)
     getHadronCorV2(k);//Calculate Hadron V2
-  int centrality  = mGRefMultCorrUtil->getCentralityBin9();
+
   int centBin = 0;
   if(centrality>=7) centBin=1;
   else if(centrality>=4)  centBin=2;
@@ -317,7 +332,11 @@ Int_t StPicoD0AnaMaker::Make()
     {
       getCorV2(idx,reweight*reweight_eff);//Fill D-hadron 2PC v2 plots
       if(charge==-1)
+      {
+        if(dMass>1.81&&dMass<1.91)
+            candPt->Fill(d0Pt,d0Pt,reweight*reweight_eff);
         massPt->Fill(dMass,d0Pt,reweight*reweight_eff);
+      }
       if(charge>0)
         massPtLike->Fill(dMass,d0Pt,reweight*reweight_eff);
 
@@ -353,6 +372,9 @@ int StPicoD0AnaMaker::isD0Pair(StKaonPion const* const kp) const
 
   StPicoTrack const* kaon = picoDst->track(kp->kaonIdx());
   StPicoTrack const* pion = picoDst->track(kp->pionIdx());
+  TLorentzVector d0Lorentz;
+  d0Lorentz.SetPtEtaPhiM(kp->pt(),kp->eta(),kp->phi(),kp->m());
+  if(fabs(d0Lorentz.Rapidity())>1.) return 0;
   bool pairCuts = false;
   if(kp->pt()<1)
   {
@@ -544,10 +566,20 @@ int StPicoD0AnaMaker::isD0PairOld(StKaonPion const* const kp) const
 bool StPicoD0AnaMaker::isGoodEvent()
 {
   StPicoEvent *event = (StPicoEvent *)picoDst->event();
-  return (event->triggerWord() & mycuts::triggerWord) &&
-    fabs(event->primaryVertex().z()) < mycuts::vz &&
-    fabs(event->primaryVertex().z() - event->vzVpd()) < mycuts::vzVpdVz;
+  // return (event->triggerWord() & mycuts::triggerWord) &&
+  return (isMBTrigger() &&
+      fabs(event->primaryVertex().z()) < mycuts::vz &&
+      fabs(event->primaryVertex().z() - event->vzVpd()) < mycuts::vzVpdVz);
   //  return event->triggerWord() & mycuts::triggerWord;
+}
+bool StPicoD0AnaMaker::isMBTrigger()
+{
+  StPicoEvent *event = (StPicoEvent *)picoDst->event();
+  return (event->isTrigger(450050) ||
+      event->isTrigger(450060)||
+      event->isTrigger(450005)||
+      event->isTrigger(450015)||
+      event->isTrigger(450025));
 }
 //-----------------------------------------------------------------------------
 bool StPicoD0AnaMaker::isGoodTrack(StPicoTrack const * const trk) const
@@ -562,7 +594,7 @@ bool StPicoD0AnaMaker::isGoodTrack(StPicoTrack const * const trk) const
 bool StPicoD0AnaMaker::isGoodHadron(StPicoTrack const * const trk) const
 {
   //return trk->pMom().perp() > mycuts::hadronPtMin &&trk->pMom().perp() < mycuts::hadronPtMax && trk->nHitsFit() >= mycuts::nHitsFit &&fabs(trk->pMom().pseudoRapidity())<1.&&fabs(trk->nSigmaElectron())>3 && (1.0*trk->nHitsFit()/trk->nHitsMax())>0.52;
-  return trk->pMom().perp() > mycuts::hadronPtMin &&trk->pMom().perp() < mycuts::hadronPtMax && trk->nHitsFit() >= mycuts::nHitsFit &&fabs(trk->pMom().pseudoRapidity())<1. && (1.0*trk->nHitsFit()/trk->nHitsMax())>0.52;
+  return trk->pMom().perp() > mycuts::hadronPtMin &&trk->pMom().perp() < mycuts::hadronPtMax && trk->nHitsFit() >= 15 &&fabs(trk->pMom().pseudoRapidity())<1. && (1.0*trk->nHitsFit()/trk->nHitsMax())>0.52;
 }
 //-----------------------------------------------------------------------------
 bool StPicoD0AnaMaker::isTpcPion(StPicoTrack const * const trk) const
@@ -678,7 +710,7 @@ bool StPicoD0AnaMaker::fixPhi(vector<float> &phi)
 
 bool StPicoD0AnaMaker::getHadronCorV2(int idxGap)
 {
-  double etaGap[3] = {0,0.15,0.5};
+  double etaGap[3] = {0,0.15,0.05};
   double mEtaGap = etaGap[idxGap];
   float hadronFill[7] = {0};
   const double reweight = mGRefMultCorrUtil->getWeight();
@@ -748,6 +780,7 @@ bool StPicoD0AnaMaker::getCorV2(int idxCand,double weight)
   else if(centrality>=4)  centBin=2;
   else centBin=3;
   //double hadronv2[9] = {0.0557348,0.0630083,0.0704378,0.0742203,0.0725183,0.0644258,0.0494283,0.0349057,0.024481};
+  // double hadronv2[9] = {0.0628911,0.0675336,0.0732146,0.0761507,0.0740089,0.0658169,0.0509878,0.0365567,0.0251269};
   double hadronv2[9] = {1,1,1,1,1,1,1,1,1};
 
 
@@ -768,7 +801,7 @@ bool StPicoD0AnaMaker::getCorV2(int idxCand,double weight)
   fillSB[6] = (charge==-1)&& (((dMass>(mean+4*sigma)) &&  (dMass<(mean+9*sigma))) ||((dMass>(mean-9*sigma)) &&  (dMass<(mean-4*sigma))));
   fillSB[3] = fillSB[1] || fillSB[2];
   fillSB[7] = fillSB[1] || fillSB[2] || fillSB[6];
-  double etaGap[3] = {0,0.15,0.5};
+  double etaGap[3] = {0,0.15,0.05};
 
   for(int k=0;k<3;k++)
   {
@@ -798,6 +831,7 @@ bool StPicoD0AnaMaker::getCorV2(int idxCand,double weight)
       StPicoTrack const* hadron = picoDst->track(i);
       if(hadron->pMom().perp()<0.2) continue;
       if(!isGoodHadron(hadron)) continue;
+      if(i==kp->kaonIdx() || i==kp->pionIdx()) continue;
       float etaHadron = hadron->pMom().pseudoRapidity();
       float phiHadron = hadron->pMom().phi();
       if(!isEtaGap(kp->eta(),etaGap[k],etaHadron))  continue;
@@ -854,20 +888,16 @@ bool StPicoD0AnaMaker::isEtaGap(double dEta,double mGap,double hEta)
 {
   if(mGap == 0) return true;
   double range =  2. - mGap*2;
-  /*
-     if(dEta>mGap/2)
-     return hEta<(dEta-mGap) && hEta>(dEta-mGap-range);
-     else if(dEta<-1.*mGap/2)
-     return hEta>(dEta+mGap) && hEta<(dEta+mGap+range);
-     else 
-     return ((hEta>(dEta+mGap) && hEta<(dEta+mGap+range/2)) || (hEta<(dEta-mGap) && hEta>(dEta-mGap-range/2)));
-     */
-  if(dEta> (1.-2*mGap))
-    return hEta<(dEta-mGap) && hEta>(dEta-mGap-range);
-  else if(dEta<(-1.+2*mGap))
-    return hEta>(dEta+mGap) && hEta<(dEta+mGap+range);
-  else 
-    return (hEta>(dEta+mGap) || hEta<(dEta-mGap));
+  // if(dEta> (1.-2*mGap))
+  //   return hEta<(dEta-mGap) && hEta>(dEta-mGap-range);
+  // else if(dEta<(-1.+2*mGap))
+  //   return hEta>(dEta+mGap) && hEta<(dEta+mGap+range);
+  // else 
+  //   return (hEta>(dEta+mGap) || hEta<(dEta-mGap));
+  if(dEta>0)
+    return hEta<-mGap;
+  else
+    return hEta>mGap;
 }
 
 

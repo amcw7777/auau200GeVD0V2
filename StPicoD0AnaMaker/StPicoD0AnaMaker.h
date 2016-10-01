@@ -90,6 +90,7 @@ class StPicoD0AnaMaker : public StMaker
     int isD0PairOld(StKaonPion const*) const;
     int D0Reco(StThreeVectorF *);
     bool isGoodEvent();
+    bool isMBTrigger();
     bool  isGoodTrack(StPicoTrack const*) const;
     bool  isGoodHadron(StPicoTrack const*) const;
     bool  isTpcPion(StPicoTrack const*) const;
@@ -153,6 +154,7 @@ class StPicoD0AnaMaker : public StMaker
     TH2D *likeV2Mass2[6][5];
     TH2D *unlikeV2Mass[6][5];
     TProfile *V2Mass[2][6][5];
+    TProfile *candPt;
     TNtuple *checkNew;
     TNtuple *checkOld;
 
