@@ -26,7 +26,7 @@ class D0CorV2Plotter
 {
   public:
     D0CorV2Plotter() {cout<<"D0 Correlation v2 plotter is running"<<endl;}
-    ~D0CorV2Plotter() {}
+    ~D0CorV2Plotter() {mLog.close();}
 
     void Init(TString, bool, bool);
     vector<vector<double> > getD0V2(vector<double> &hadronV2, TH1D *candOverSignal, int indexBkg);

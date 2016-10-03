@@ -20,17 +20,18 @@ void D0CorV2Plotter::Init(TString inputFileName,bool isSystematic,bool isYieldSy
   mInputFileName = inputFileName;
   mIsYieldSystematic = isYieldSystematic;
   mIsSystematic = isSystematic;
-  mIndexEtaGap = 1;
+  mIndexEtaGap = 2;
   mFlattenNames[0] = "v2";
   mFlattenNames[1] = "cosD";
   mFlattenNames[2] = "sinD";
   mFlattenNames[3] = "cosHadron";
   mFlattenNames[4] = "sinHadron";
 	mInputFile= new TFile(mInputFileName.Data());
-  if(!mIsSystematic)
+  if(!mIsSystematic && !mIsYieldSystematic)
     mLog.open("toM.txt");
   else
-    mLog.open("systematicLog.txt");
+    mLog.open("systematicLog.txt",ofstream::app);
+  mLog<<inputFileName<<endl;
 }
 
 vector<vector<double> > D0CorV2Plotter::getD0V2(vector<double> &hadronV2, TH1D *candOverSignal, int indexBkg) 
@@ -55,17 +56,17 @@ vector<vector<double> > D0CorV2Plotter::getD0V2(vector<double> &hadronV2, TH1D *
 		}
 		inputHistograms[i][1]->Multiply(inputHistograms[i][3]); // cosD * cos Hadron
 		inputHistograms[i][2]->Multiply(inputHistograms[i][4]); // sinD * sin Hadron
-		for(int ipt=1;ipt<6;ipt++)
+		for(int ipt=0;ipt<10;ipt++)
 		{
-			inputHistograms[i][1]->SetBinError(ipt,0);//The flattening terms have no stat. error
-			inputHistograms[i][2]->SetBinError(ipt,0);
+			inputHistograms[i][1]->SetBinError(ipt+1,0);//The flattening terms have no stat. error
+			inputHistograms[i][2]->SetBinError(ipt+1,0);
 		}
 		inputHistograms[i][0]->Add(inputHistograms[i][1],-1);
 		inputHistograms[i][0]->Add(inputHistograms[i][2],-1);
 		flattenV2[i] = (TH1D *)inputHistograms[i][0]->Clone(sidebandNames[i].Data());// V2 after phi flattening
     // Divide hardron v2 with weight of every cumulant
     // pT and centrality exclusively
-		for(int ipt=0;ipt<6;ipt++)
+		for(int ipt=0;ipt<10;ipt++)
 		{
 			double hadronv2Weight = 0;
 			double dv2Weight = 0;
@@ -75,30 +76,33 @@ vector<vector<double> > D0CorV2Plotter::getD0V2(vector<double> &hadronV2, TH1D *
 				hadronv2Weight += mWeight*hadronV2[icent];
 				dv2Weight += mWeight;
 			}
-			double dv2 = inputHistograms[i][0]->GetBinContent(ipt+1)*dv2Weight/hadronv2Weight;
-			double dv2_err = inputHistograms[i][0]->GetBinError(ipt+1)*dv2Weight/hadronv2Weight;
+			// double dv2 = inputHistograms[i][0]->GetBinContent(ipt+1)*dv2Weight/hadronv2Weight;
+			// double dv2_err = inputHistograms[i][0]->GetBinError(ipt+1)*dv2Weight/hadronv2Weight;
+			double dv2 = inputHistograms[i][0]->GetBinContent(ipt+1);//*dv2Weight/hadronv2Weight;
+			double dv2_err = inputHistograms[i][0]->GetBinError(ipt+1);//*dv2Weight/hadronv2Weight;
 			flattenV2[i]->SetBinContent(ipt+1,dv2);
 			flattenV2[i]->SetBinError(ipt+1,dv2_err);
 		}
 	}//mass region loop done	
 /////// Set candidate and background sample
+  TProfile *candPt = (TProfile *)mInputFile->Get("candPt")->Clone("candPt");
   mLog<<"============Foregroundd V2  ...========================="<<endl;
   mLog<<"pT\t\t\t\tForeground v2\t\t\t\tstat.error"<<endl;
 	TH1D *candV2 = (TH1D *)flattenV2[5]->Clone("candV2");
-  for(int ipt=1;ipt<7;ipt++)
+  for(int ipt=1;ipt<11;ipt++)
   {
     double v2Value = candV2->GetBinContent(ipt);
     double v2Error= candV2->GetBinError(ipt);
-    mLog<<ipt<<"\t\t\t\t"<<v2Value<<"\t\t\t\t"<<v2Error<<endl;
+    mLog<<candPt->GetBinContent(ipt)<<"\t\t\t\t"<<v2Value<<"\t\t\t\t"<<v2Error<<endl;
   }
   mLog<<"============Background V2  ...========================="<<endl;
   mLog<<"pT\t\t\t\tBackground v2\t\t\t\tstat.error"<<endl;
 	TH1D *backgroundV2= (TH1D *)flattenV2[indexBkg]->Clone("backgroundV2");
-  for(int ipt=1;ipt<7;ipt++)
+  for(int ipt=1;ipt<11;ipt++)
   {
     double v2Value = backgroundV2->GetBinContent(ipt);
     double v2Error= backgroundV2->GetBinError(ipt);
-    mLog<<ipt<<"\t\t\t\t"<<v2Value<<"\t\t\t\t"<<v2Error<<endl;
+    mLog<<candPt->GetBinContent(ipt)<<"\t\t\t\t"<<v2Value<<"\t\t\t\t"<<v2Error<<endl;
   }
 // Background extraction
 	// TH1D *signalV2 = (TH1D *)flattenV2[5]->Clone("signalV2");
@@ -107,13 +111,13 @@ vector<vector<double> > D0CorV2Plotter::getD0V2(vector<double> &hadronV2, TH1D *
   vector<double> d0V2Errors;
   mLog<<"============D0 v2  ...========================="<<endl;
   mLog<<"pT\t\t\t\tD0 v2\t\t\t\tD0 v2 stat.error"<<endl;
-  for(int ipt=1;ipt<7;ipt++)
+  for(int ipt=1;ipt<11;ipt++)
   {
     double v2Value = signalV2->GetBinContent(ipt);
     double v2Error= signalV2->GetBinError(ipt);
     d0V2Values.push_back(v2Value);
     d0V2Errors.push_back(v2Error);
-    mLog<<ipt<<"\t\t\t\t"<<v2Value<<"\t\t\t\t"<<v2Error<<endl;
+    mLog<<candPt->GetBinContent(ipt)<<"\t\t\t\t"<<v2Value<<"\t\t\t\t"<<v2Error<<endl;
   }
   vector<vector<double> > d0V2Result;
   d0V2Result.push_back(d0V2Values);
@@ -130,18 +134,19 @@ vector<vector<double> > D0CorV2Plotter::fitMass()
   TH2D *massPtUnlike = (TH2D *)mInputFile->Get("massUnlike")->Clone("massPtUnlike");
 	TH2D *massPtLike = (TH2D *)mInputFile->Get("massLike")->Clone("massPtLike");
 	massPtLike->RebinY(10);
-	TH1D *massUnlike[6];
-	TH1D *massLike[6];
-	float xbin[7] = {0,1,2,3,4,5,10};
-	TH1D *signalHistogram = new TH1D("signal","",6,xbin);
-	TH1D *candidateHistogram = new TH1D("cand","",6,xbin);
+	TH1D *massUnlike[12];
+	TH1D *massLike[12];
+	// float xbin[7] = {0,1,2,3,4,5,10};
+  float xbin[11] = {0,0.5,1,1.5,2,2.5,3,3.5,4,5,10};
+	TH1D *signalHistogram = new TH1D("signal","",10,xbin);
+	TH1D *candidateHistogram = new TH1D("cand","",10,xbin);
 	TCanvas *massCheck = new TCanvas();
-	massCheck->Divide(3,2);
-  mLog<<"pT bin\t\t\t\t#candidate\t\t\t\t\t\t#signal"<<endl;
-	for(int ipt=0;ipt<6;ipt++)
+	massCheck->Divide(4,3);
+  mLog<<"pT bin\t\t\t\t#signal\t\t\t\t\t\t#candidate"<<endl;
+	for(int ipt=0;ipt<10;ipt++)
 	{
 		massUnlike[ipt] = massPtUnlike->ProjectionX(Form("massUnlike_%i",ipt),ipt+1,ipt+1);	//unlike sign binning is 0,1,2..,5,10
-		if(ipt!=5)
+		if(ipt!=9)
 			massLike[ipt] = massPtLike->ProjectionX(Form("massLike_%i",ipt),ipt+1,ipt+1);	// like sign binnning is 0,1,2...,8,9,10
 		else
 			massLike[ipt] = massPtLike->ProjectionX(Form("massLike_%i",ipt),ipt+1,ipt+5);	
@@ -150,8 +155,8 @@ vector<vector<double> > D0CorV2Plotter::fitMass()
 		massUnlike[ipt]->Draw();
 		pair<double,double> sig_yield = fit_hist(massUnlike[ipt],massCheck,ipt+1,3,fitResult);
 		massCheck->cd(ipt+1);
-		massLike[ipt]->Draw("pe,same");
-		massLike[ipt]->SetLineColor(4);
+		// massLike[ipt]->Draw("pe,same");
+		// massLike[ipt]->SetLineColor(4);
 		//fout<<"i = "<<i<<endl;
 		
 		signalHistogram->SetBinContent(ipt+1,fitResult[0]);
@@ -167,7 +172,7 @@ vector<vector<double> > D0CorV2Plotter::fitMass()
 	candOverSignal->Divide(candidateHistogram,signalHistogram,1,1);
   vector<double> candOverSignalValues;
   vector<double> candOverSignalErrors;
-  for(int ipt=1;ipt<7;ipt++)
+  for(int ipt=1;ipt<11;ipt++)
   {
     double cOSValue = candOverSignal->GetBinContent(ipt);
     double cOSError = candOverSignal->GetBinError(ipt);
@@ -267,7 +272,7 @@ pair<double,double> D0CorV2Plotter::fit_hist(TH1D *histo, TCanvas *cfg, int iptb
 	int pass = 0;
 	int fittingtry = 0;
 
-	char sig_print[100], chi2_print[100], mean_print[100], sigma_print[100],sb_ratio[100];
+	char sig_print[100], chi2_print[100], mean_print[100], sigma_print[100],sb_ratio[100],sign_print[100];
 
 	while (!pass) {
 
@@ -360,20 +365,23 @@ pair<double,double> D0CorV2Plotter::fit_hist(TH1D *histo, TCanvas *cfg, int iptb
 			//fout<<iptbin<<"fitmean = "<<fitmean<<endl;
 			//fout<<iptbin<<"fitsigma = "<<fitsigma<<endl;
 			double sbratio = fitArray[0]/fitArray[1];
-			//sprintf( sb_ratio, "#sb raito: %6.4f", sbratio);
+      double sign = fitArray[0]/sqrt(fitArray[1]);
+			sprintf( sb_ratio, "sb raito: %6.4f", sbratio);
+			sprintf( sign_print, "significance: %6.4f", sign);
 
 
 			if (fittingtry == 2)
 			{
 				TLatex Tl;
 				Tl.SetNDC();
-				Tl.SetTextAlign(12);
+				Tl.SetTextAlign(10);
 				Tl.SetTextSize(0.06);
 				Tl.DrawLatex(0.15,0.8, sig_print);
 				Tl.DrawLatex(0.15,0.7, chi2_print);
 				Tl.DrawLatex(0.15,0.6, sb_ratio);
 				Tl.DrawLatex(0.55,0.8, mean_print);
 				Tl.DrawLatex(0.55,0.7, sigma_print);
+				Tl.DrawLatex(0.55,0.6, sign_print);
 			}
 
 		}
@@ -405,7 +413,7 @@ TH1D *D0CorV2Plotter::getSignalV2(TH1D *candOverSgn,TH1D *bkgV2,TH1D *candV2)
 	signalV2->Add(bkgV2,-1);
 	signalV2->Multiply(candOverSgn);
   signalV2->Add(bkgV2,1);
-  for(unsigned int ipt=1;ipt<7;ipt++)
+  for(unsigned int ipt=1;ipt<11;ipt++)
   {
     double v_candOverSgn = candOverSgn->GetBinContent(ipt);
     double v_bkgV2 = bkgV2->GetBinContent(ipt);
@@ -413,8 +421,9 @@ TH1D *D0CorV2Plotter::getSignalV2(TH1D *candOverSgn,TH1D *bkgV2,TH1D *candV2)
     double err_candOverSgn = candOverSgn->GetBinError(ipt);
     double err_bkgV2 = bkgV2->GetBinError(ipt);
     double err_candV2 = candV2->GetBinError(ipt);
-    double v2CalMatrix[6] = {v_candOverSgn,v_bkgV2,v_candV2,err_candOverSgn,err_bkgV2,err_candV2};
+    double v2CalMatrix[12] = {v_candOverSgn,v_bkgV2,v_candV2,err_candOverSgn,err_bkgV2,err_candV2};
     signalV2->SetBinError(ipt,getV2Error(v2CalMatrix));
+    // mLog<<"cos = "<<v_candOverSgn<<"\tcand v2 = "<<v_candV2<<"\tbkg v2 = "<<v_bkgV2<<"\tsig v2 = "<<signalV2->GetBinContent(ipt)<<endl;;
   }
   return signalV2;
 }
