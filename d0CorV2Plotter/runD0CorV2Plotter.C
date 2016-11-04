@@ -21,13 +21,13 @@ void runD0CorV2Plotter()
   vector<double> bkgSys = getBackgroundSys();
   ofstream outputFile("toM.txt",ofstream::app);
   outputFile<<"====================Systematics Uncertainty====================="<<endl;
-  // outputFile<<"pT:\t\t\t\tYieldSys\t\t\t\tEff. Sys.\t\t\t\tBkg. Sys.\t\t\t\tTot. Sys"<<endl;
-  outputFile<<"pT:\t\t\t\tYieldSys\t\t\t\tBkg. Sys.\t\t\t\tTot. Sys"<<endl;
+  outputFile<<"pT:\t\t\t\tYieldSys\t\t\t\tEff. Sys.\t\t\t\tBkg. Sys.\t\t\t\tTot. Sys"<<endl;
+  // outputFile<<"pT:\t\t\t\tYieldSys\t\t\t\tBkg. Sys.\t\t\t\tTot. Sys"<<endl;
   for(int i=0;i<10;i++)
   {
     double totSys = sqrt( yieldSys[i]*yieldSys[i] + effSys[i]*effSys[i] + bkgSys[i]*bkgSys[i] );
-    // outputFile<<i<<"\t\t\t\t"<<yieldSys[i]<<"\t\t\t\t"<<effSys[i]<<"\t\t\t\t"<<bkgSys[i]<<"\t\t\t\t"<<totSys<<endl;
-    outputFile<<i<<"\t\t\t\t"<<yieldSys[i]<<"\t\t\t\t"<<bkgSys[i]<<"\t\t\t\t"<<totSys<<endl;
+    outputFile<<i<<"\t\t\t\t"<<yieldSys[i]<<"\t\t\t\t"<<effSys[i]<<"\t\t\t\t"<<bkgSys[i]<<"\t\t\t\t"<<totSys<<endl;
+    // outputFile<<i<<"\t\t\t\t"<<yieldSys[i]<<"\t\t\t\t"<<bkgSys[i]<<"\t\t\t\t"<<totSys<<endl;
   }
 }
 
@@ -38,6 +38,7 @@ vector<vector<double> > getD0V2(bool inputIsSystematic = false,bool inputIsYield
   vector<vector<double> > hadronResult = d0V2Plotter->getHadronV2();
   vector<double> hadronV2Values = hadronResult[0];
   // double a[9] = { 0.0557348,0.0630083,0.0704378,0.0742203,0.0725183,0.0644258,0.0494283,0.0349057,0.024481 };
+  double a[9] = {0.063792,0.0686188,0.0740367,0.0765388,0.0738434,0.064967,0.0495683,0.0347368,0.0246511};
   // for(int i=0;i<9;i++)
   //   hadronV2Values[i] = a[i];
   vector<vector<double> > fitResult = d0V2Plotter->fitMass();
@@ -94,7 +95,7 @@ vector<double> getEfficiencySys()
   vector<double> efficiencySys;
   vector<vector<double> > efficiencySysContainer;
   efficiencySysContainer.push_back( (getD0V2(true,false,"auau2014D0CorV2.root"))[0]);
-  efficiencySysContainer.push_back( (getD0V2(true,false,"auau2014D0CorV2.root"))[0]);
+  efficiencySysContainer.push_back( (getD0V2(true,false,"no-eff.root"))[0]);
   for(int i=0;i<10;i++)
     efficiencySys.push_back(fabs(efficiencySysContainer[1][i]-efficiencySysContainer[0][i]));
   return efficiencySys;

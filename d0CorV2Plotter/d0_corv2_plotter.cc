@@ -56,7 +56,7 @@ vector<vector<double> > D0CorV2Plotter::getD0V2(vector<double> &hadronV2, TH1D *
 		}
 		inputHistograms[i][1]->Multiply(inputHistograms[i][3]); // cosD * cos Hadron
 		inputHistograms[i][2]->Multiply(inputHistograms[i][4]); // sinD * sin Hadron
-		for(int ipt=0;ipt<10;ipt++)
+		for(int ipt=2;ipt<10;ipt++)
 		{
 			inputHistograms[i][1]->SetBinError(ipt+1,0);//The flattening terms have no stat. error
 			inputHistograms[i][2]->SetBinError(ipt+1,0);
@@ -66,7 +66,7 @@ vector<vector<double> > D0CorV2Plotter::getD0V2(vector<double> &hadronV2, TH1D *
 		flattenV2[i] = (TH1D *)inputHistograms[i][0]->Clone(sidebandNames[i].Data());// V2 after phi flattening
     // Divide hardron v2 with weight of every cumulant
     // pT and centrality exclusively
-		for(int ipt=0;ipt<10;ipt++)
+		for(int ipt=2;ipt<10;ipt++)
 		{
 			double hadronv2Weight = 0;
 			double dv2Weight = 0;
@@ -76,10 +76,10 @@ vector<vector<double> > D0CorV2Plotter::getD0V2(vector<double> &hadronV2, TH1D *
 				hadronv2Weight += mWeight*hadronV2[icent];
 				dv2Weight += mWeight;
 			}
-			// double dv2 = inputHistograms[i][0]->GetBinContent(ipt+1)*dv2Weight/hadronv2Weight;
-			// double dv2_err = inputHistograms[i][0]->GetBinError(ipt+1)*dv2Weight/hadronv2Weight;
-			double dv2 = inputHistograms[i][0]->GetBinContent(ipt+1);//*dv2Weight/hadronv2Weight;
-			double dv2_err = inputHistograms[i][0]->GetBinError(ipt+1);//*dv2Weight/hadronv2Weight;
+			double dv2 = inputHistograms[i][0]->GetBinContent(ipt+1)*dv2Weight/hadronv2Weight;
+			double dv2_err = inputHistograms[i][0]->GetBinError(ipt+1)*dv2Weight/hadronv2Weight;
+			// double dv2 = inputHistograms[i][0]->GetBinContent(ipt+1);/#<{(|dv2Weight/hadronv2Weight;
+			// double dv2_err = inputHistograms[i][0]->GetBinError(ipt+1);/#<{(|dv2Weight/hadronv2Weight;
 			flattenV2[i]->SetBinContent(ipt+1,dv2);
 			flattenV2[i]->SetBinError(ipt+1,dv2_err);
 		}
@@ -89,7 +89,7 @@ vector<vector<double> > D0CorV2Plotter::getD0V2(vector<double> &hadronV2, TH1D *
   mLog<<"============Foregroundd V2  ...========================="<<endl;
   mLog<<"pT\t\t\t\tForeground v2\t\t\t\tstat.error"<<endl;
 	TH1D *candV2 = (TH1D *)flattenV2[5]->Clone("candV2");
-  for(int ipt=1;ipt<11;ipt++)
+  for(int ipt=3;ipt<11;ipt++)
   {
     double v2Value = candV2->GetBinContent(ipt);
     double v2Error= candV2->GetBinError(ipt);
@@ -98,7 +98,7 @@ vector<vector<double> > D0CorV2Plotter::getD0V2(vector<double> &hadronV2, TH1D *
   mLog<<"============Background V2  ...========================="<<endl;
   mLog<<"pT\t\t\t\tBackground v2\t\t\t\tstat.error"<<endl;
 	TH1D *backgroundV2= (TH1D *)flattenV2[indexBkg]->Clone("backgroundV2");
-  for(int ipt=1;ipt<11;ipt++)
+  for(int ipt=3;ipt<11;ipt++)
   {
     double v2Value = backgroundV2->GetBinContent(ipt);
     double v2Error= backgroundV2->GetBinError(ipt);
@@ -111,7 +111,7 @@ vector<vector<double> > D0CorV2Plotter::getD0V2(vector<double> &hadronV2, TH1D *
   vector<double> d0V2Errors;
   mLog<<"============D0 v2  ...========================="<<endl;
   mLog<<"pT\t\t\t\tD0 v2\t\t\t\tD0 v2 stat.error"<<endl;
-  for(int ipt=1;ipt<11;ipt++)
+  for(int ipt=3;ipt<11;ipt++)
   {
     double v2Value = signalV2->GetBinContent(ipt);
     double v2Error= signalV2->GetBinError(ipt);
@@ -143,13 +143,13 @@ vector<vector<double> > D0CorV2Plotter::fitMass()
 	TCanvas *massCheck = new TCanvas();
 	massCheck->Divide(4,3);
   mLog<<"pT bin\t\t\t\t#signal\t\t\t\t\t\t#candidate"<<endl;
-	for(int ipt=0;ipt<10;ipt++)
+	for(int ipt=2;ipt<10;ipt++)
 	{
 		massUnlike[ipt] = massPtUnlike->ProjectionX(Form("massUnlike_%i",ipt),ipt+1,ipt+1);	//unlike sign binning is 0,1,2..,5,10
-		if(ipt!=9)
+		// if(ipt!=9)
 			massLike[ipt] = massPtLike->ProjectionX(Form("massLike_%i",ipt),ipt+1,ipt+1);	// like sign binnning is 0,1,2...,8,9,10
-		else
-			massLike[ipt] = massPtLike->ProjectionX(Form("massLike_%i",ipt),ipt+1,ipt+5);	
+		// else
+		// 	massLike[ipt] = massPtLike->ProjectionX(Form("massLike_%i",ipt),ipt+1,ipt+5);	
 		double fitResult[3];
 		massCheck->cd(ipt+1);
 		massUnlike[ipt]->Draw();
